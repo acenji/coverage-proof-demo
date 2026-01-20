@@ -407,17 +407,31 @@ jobs:
           DOTNET_VER: ${{ env.DOTNET_VERSION }}
           NODE_VER: ${{ env.NODE_VERSION }}
         run: |
-          # Read all hashes and manifests
+          # Read all hashes
           CS_COBERTURA_HASH=$(cat ./artifacts/csharp-coverage/coverage.cobertura.xml.sha256 2>/dev/null || echo "N/A")
           CS_RAW_HASH=$(cat ./artifacts/csharp-coverage/raw-traces.tar.sha256 2>/dev/null || echo "N/A")
-          CS_MANIFEST=$(cat ./artifacts/csharp-coverage/build-manifest.json 2>/dev/null || echo "{}")
-
           JS_COBERTURA_HASH=$(cat ./artifacts/javascript-coverage/coverage.cobertura.xml.sha256 2>/dev/null || echo "N/A")
           JS_JSON_HASH=$(cat ./artifacts/javascript-coverage/coverage.json.sha256 2>/dev/null || echo "N/A")
           JS_RAW_HASH=$(cat ./artifacts/javascript-coverage/raw-traces.tar.sha256 2>/dev/null || echo "N/A")
-          JS_MANIFEST=$(cat ./artifacts/javascript-coverage/build-manifest.json 2>/dev/null || echo "{}")
 
-          VERIFY_REPORT=$(cat ./artifacts/verification-report/verification-report.json 2>/dev/null || echo "{}")
+          # Read JSON manifests (with validation)
+          if [ -f ./artifacts/csharp-coverage/build-manifest.json ]; then
+            CS_MANIFEST=$(cat ./artifacts/csharp-coverage/build-manifest.json | jq -c '.' 2>/dev/null || echo '{}')
+          else
+            CS_MANIFEST='{}'
+          fi
+
+          if [ -f ./artifacts/javascript-coverage/build-manifest.json ]; then
+            JS_MANIFEST=$(cat ./artifacts/javascript-coverage/build-manifest.json | jq -c '.' 2>/dev/null || echo '{}')
+          else
+            JS_MANIFEST='{}'
+          fi
+
+          if [ -f ./artifacts/verification-report/verification-report.json ]; then
+            VERIFY_REPORT=$(cat ./artifacts/verification-report/verification-report.json | jq -c '.' 2>/dev/null || echo '{}')
+          else
+            VERIFY_REPORT='{}'
+          fi
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
           # Build attestation using jq (handles all escaping properly)
