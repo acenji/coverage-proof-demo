@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Coverage Attestation Schema",
+  "description": "Schema for cryptographic coverage proof attestations",
+  "type": "object",
+  "required": ["@context", "@type", "subject", "predicate"],
+  "properties": {
+    "@context": {
+      "type": "string",
+      "description": "The attestation context (in-toto format)"
+    },
+    "@type": {
+      "type": "string",
+      "const": "CoverageAttestation"
+    },
+    "subject": {
+      "type": "object",
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "GitHub repository in owner/repo format"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Git commit SHA"
+        },
+        "ref": {
+          "type": "string",
+          "description": "Git ref (branch/tag)"
+        },
+        "workflow_run_id": {
+          "type": "string",
+          "description": "GitHub Actions run ID"
+        }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "required": ["type", "version", "generated_at", "coverage_artifacts"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "coverage-proof"
+        },
+        "version": {
+          "type": "string",
+          "description": "Schema version"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of attestation generation"
+        },
+        "environment": {
+          "type": "object",
+          "description": "Build environment details"
+        },
+        "coverage_artifacts": {
+          "type": "object",
+          "description": "Coverage artifacts with cryptographic hashes"
+        },
+        "verification": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "description": "Hash algorithm used"
+            },
+            "instructions": {
+              "type": "string",
+              "description": "How to verify the attestation"
+            }
+          }
+        }
+      }
+    }
+  }
+}

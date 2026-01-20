@@ -1,0 +1,22 @@
+{
+  "name": "coverage-proof-demo-js",
+  "version": "1.0.0",
+  "description": "JavaScript mirror implementation for provable coverage demo",
+  "main": "prime.js",
+  "scripts": {
+    "test": "mocha prime.test.js",
+    "coverage": "nyc mocha prime.test.js"
+  },
+  "keywords": [
+    "coverage",
+    "testing",
+    "prime",
+    "demo"
+  ],
+  "author": "Ivan Assenov",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^10.4.0",
+    "nyc": "^15.1.0"
+  }
+}

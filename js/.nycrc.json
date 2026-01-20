@@ -1,0 +1,18 @@
+{
+  "all": true,
+  "check-coverage": false,
+  "include": [
+    "prime.js"
+  ],
+  "exclude": [
+    "**/*.test.js",
+    "node_modules/**"
+  ],
+  "reporter": [
+    "text",
+    "cobertura",
+    "json",
+    "lcov"
+  ],
+  "report-dir": "./coverage"
+}
