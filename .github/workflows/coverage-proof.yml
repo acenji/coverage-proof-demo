@@ -398,6 +398,14 @@ jobs:
           find ./artifacts -type f | head -50
 
       - name: Generate comprehensive attestation
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          DOTNET_VER: ${{ env.DOTNET_VERSION }}
+          NODE_VER: ${{ env.NODE_VERSION }}
         run: |
           # Read all hashes and manifests
           CS_COBERTURA_HASH=$(cat ./artifacts/csharp-coverage/coverage.cobertura.xml.sha256 2>/dev/null || echo "N/A")
@@ -410,61 +418,65 @@ jobs:
           JS_MANIFEST=$(cat ./artifacts/javascript-coverage/build-manifest.json 2>/dev/null || echo "{}")
 
           VERIFY_REPORT=$(cat ./artifacts/verification-report/verification-report.json 2>/dev/null || echo "{}")
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-          # Create comprehensive attestation
-          cat > ./artifacts/attestation.json << 'ATTESTATION_EOF'
-          {
-            "@context": "https://in-toto.io/Statement/v1",
-            "@type": "CoverageAttestation",
-            "version": "2.0.0",
-            "subject": {
-              "repository": "${{ github.repository }}",
-              "commit": "${{ github.sha }}",
-              "ref": "${{ github.ref }}",
-              "workflow_run_id": "${{ github.run_id }}",
-              "workflow_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            },
-            "predicate": {
-              "type": "coverage-proof",
-              "generated_at": "TIMESTAMP_PLACEHOLDER",
-              "environment": {
-                "runner_os": "ubuntu-22.04",
-                "dotnet_version": "${{ env.DOTNET_VERSION }}",
-                "node_version": "${{ env.NODE_VERSION }}"
+          # Build attestation using jq (handles all escaping properly)
+          jq -n \
+            --arg ctx "https://in-toto.io/Statement/v1" \
+            --arg type "CoverageAttestation" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg commit "$GITHUB_SHA" \
+            --arg ref "$GITHUB_REF" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg timestamp "$TIMESTAMP" \
+            --arg dotnet "$DOTNET_VER" \
+            --arg node "$NODE_VER" \
+            --arg cs_cob "$CS_COBERTURA_HASH" \
+            --arg cs_raw "$CS_RAW_HASH" \
+            --arg js_cob "$JS_COBERTURA_HASH" \
+            --arg js_json "$JS_JSON_HASH" \
+            --arg js_raw "$JS_RAW_HASH" \
+            --argjson cs_manifest "$CS_MANIFEST" \
+            --argjson js_manifest "$JS_MANIFEST" \
+            --argjson verify "$VERIFY_REPORT" \
+            '{
+              "@context": $ctx,
+              "@type": $type,
+              "version": "2.0.0",
+              "subject": {
+                "repository": $repo,
+                "commit": $commit,
+                "ref": $ref,
+                "workflow_run_id": $run_id,
+                "workflow_run_url": $run_url
               },
-              "csharp": {
-                "coverage_artifacts": {
-                  "cobertura": { "sha256": "CS_COBERTURA_PLACEHOLDER" },
-                  "raw_traces": { "sha256": "CS_RAW_PLACEHOLDER" }
+              "predicate": {
+                "type": "coverage-proof",
+                "generated_at": $timestamp,
+                "environment": {
+                  "runner_os": "ubuntu-22.04",
+                  "dotnet_version": $dotnet,
+                  "node_version": $node
                 },
-                "build_manifest": CS_MANIFEST_PLACEHOLDER
-              },
-              "javascript": {
-                "coverage_artifacts": {
-                  "cobertura": { "sha256": "JS_COBERTURA_PLACEHOLDER" },
-                  "json": { "sha256": "JS_JSON_PLACEHOLDER" },
-                  "raw_traces": { "sha256": "JS_RAW_PLACEHOLDER" }
+                "csharp": {
+                  "coverage_artifacts": {
+                    "cobertura": { "sha256": $cs_cob },
+                    "raw_traces": { "sha256": $cs_raw }
+                  },
+                  "build_manifest": $cs_manifest
                 },
-                "build_manifest": JS_MANIFEST_PLACEHOLDER
-              },
-              "verification": VERIFY_PLACEHOLDER
-            }
-          }
-          ATTESTATION_EOF
-
-          # Replace placeholders
-          sed -i "s/TIMESTAMP_PLACEHOLDER/$(date -u +%Y-%m-%dT%H:%M:%SZ)/g" ./artifacts/attestation.json
-          sed -i "s/CS_COBERTURA_PLACEHOLDER/$CS_COBERTURA_HASH/g" ./artifacts/attestation.json
-          sed -i "s/CS_RAW_PLACEHOLDER/$CS_RAW_HASH/g" ./artifacts/attestation.json
-          sed -i "s/JS_COBERTURA_PLACEHOLDER/$JS_COBERTURA_HASH/g" ./artifacts/attestation.json
-          sed -i "s/JS_JSON_PLACEHOLDER/$JS_JSON_HASH/g" ./artifacts/attestation.json
-          sed -i "s/JS_RAW_PLACEHOLDER/$JS_RAW_HASH/g" ./artifacts/attestation.json
-
-          # Embed JSON objects (using jq for proper JSON handling)
-          jq --argjson cs "$CS_MANIFEST" --argjson js "$JS_MANIFEST" --argjson verify "$VERIFY_REPORT" \
-            '.predicate.csharp.build_manifest = $cs | .predicate.javascript.build_manifest = $js | .predicate.verification = $verify' \
-            ./artifacts/attestation.json > ./artifacts/attestation.tmp.json
-          mv ./artifacts/attestation.tmp.json ./artifacts/attestation.json
+                "javascript": {
+                  "coverage_artifacts": {
+                    "cobertura": { "sha256": $js_cob },
+                    "json": { "sha256": $js_json },
+                    "raw_traces": { "sha256": $js_raw }
+                  },
+                  "build_manifest": $js_manifest
+                },
+                "verification": $verify
+              }
+            }' > ./artifacts/attestation.json
 
           echo "=== Generated Attestation ==="
           cat ./artifacts/attestation.json | jq .
