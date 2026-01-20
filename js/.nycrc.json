@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/nycrc",
+  "_comment": "EXPLICIT EXCLUSIONS MANIFEST - All exclusions must be documented here",
+
+  "all": true,
+  "check-coverage": true,
+
+  "include": [
+    "prime.js"
+  ],
+
+  "exclude": [
+    "**/*.test.js",
+    "node_modules/**"
+  ],
+
+  "reporter": [
+    "text",
+    "cobertura",
+    "json",
+    "lcov"
+  ],
+
+  "report-dir": "./coverage",
+
+  "branches": 100,
+  "lines": 100,
+  "functions": 100,
+  "statements": 100,
+
+  "_exclusion_manifest": {
+    "excluded_files": [
+      "**/*.test.js - Test files (not production code)",
+      "node_modules/** - Third-party dependencies"
+    ],
+    "excluded_lines": [],
+    "excluded_functions": [],
+    "justification": "Only test files and dependencies are excluded. All production code (prime.js) is measured with 100% coverage required."
+  },
+
+  "preserve-comments": true,
+  "produce-source-map": true
+}

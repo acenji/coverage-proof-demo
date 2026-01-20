@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Coverage Run Settings for PrimeLib
+
+  EXPLICIT EXCLUSIONS MANIFEST
+  This file documents all coverage exclusions.
+  An empty exclusion list means 100% of code is measured.
+
+  Any exclusions must be explicitly listed and justified here.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura,opencover,lcov</Format>
+          <ExcludeByFile></ExcludeByFile>
+          <ExcludeByAttribute>
+            <!-- Standard .NET attributes that indicate non-user code -->
+            GeneratedCodeAttribute,
+            CompilerGeneratedAttribute
+          </ExcludeByAttribute>
+          <Include></Include>
+          <Exclude></Exclude>
+          <!--
+            EXCLUSION MANIFEST:
+            - No source files excluded
+            - No namespaces excluded
+            - No methods excluded
+            - Only compiler-generated code is excluded (standard practice)
+          -->
+          <SingleHit>false</SingleHit>
+          <UseSourceLink>true</UseSourceLink>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+          <SkipAutoProps>false</SkipAutoProps>
+          <DeterministicReport>true</DeterministicReport>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
