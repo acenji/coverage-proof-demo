@@ -241,9 +241,11 @@ jobs:
           cd ./coverage-output
 
           # Hash coverage files
-          for file in *.xml *.json *.lcov 2>/dev/null; do
+          for file in *.xml *.json; do
             [ -f "$file" ] && sha256sum "$file" | cut -d ' ' -f 1 > "${file}.sha256"
           done
+          # Hash lcov if exists
+          [ -f "coverage.lcov" ] && sha256sum coverage.lcov | cut -d ' ' -f 1 > coverage.lcov.sha256
 
           # Hash raw traces
           tar -cf raw-traces.tar raw-traces/
